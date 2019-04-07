@@ -42,10 +42,12 @@ public class StartTest extends AppCompatActivity implements View.OnClickListener
     LinearLayout lnAns4;
     @BindView(R.id.progress)
     ProgressBar progress;
+    @BindView(R.id.tv_score)
+    TextView tvScore;
 
     private List<Question> list;
 
-    private int score = 0;
+    private int score = 0, highScore = 0;
     private int pos = 0;
 
     @Override
@@ -63,13 +65,36 @@ public class StartTest extends AppCompatActivity implements View.OnClickListener
     }
 
     private void initQuestion(int pos) {
-        tvStt.setText((pos + 1) + "/" + list.size());
-        tvQs.setText(list.get(pos).getQuestion());
-        tvAns1.setText("A. " + list.get(pos).getA());
-        tvAns2.setText("B. " + list.get(pos).getB());
-        tvAns3.setText("C. " + list.get(pos).getC());
-        tvAns4.setText("D. " + list.get(pos).getD());
+        if (pos == list.size()) {
 
+            if (score > highScore)
+                PrefUtil.saveInt(this, "score", score);
+            Toast.makeText(this, "Hoàn thành bài test. Số điểm của bạn là: " + score + " điểm!!!", Toast.LENGTH_LONG).show();
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    finish();
+                }
+            }, 2000);
+        } else {
+
+            tvStt.setText((pos + 1) + "/" + list.size());
+            tvQs.setText(list.get(pos).getQuestion());
+            tvAns1.setText("A. " + list.get(pos).getA());
+            tvAns2.setText("B. " + list.get(pos).getB());
+            tvAns3.setText("C. " + list.get(pos).getC());
+            tvAns4.setText("D. " + list.get(pos).getD());
+            tvScore.setText(score + "");
+        }
+
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+
+        if(highScore < score)
+            PrefUtil.saveInt(this, "score", score);
     }
 
     private void onClick() {
@@ -78,6 +103,7 @@ public class StartTest extends AppCompatActivity implements View.OnClickListener
     }
 
     private void init() {
+        highScore = PrefUtil.getInt(this, "score", -1);
 
         list = new ArrayList<>();
         list.add(new Question("Đâu không phải là một bước trong quy trình hiến máu?", "Khám lâm sàng", "Trà đường", "Xét nghiệm máu", "Đăng ký", "b"));
@@ -89,7 +115,6 @@ public class StartTest extends AppCompatActivity implements View.OnClickListener
         list.add(new Question("Ngày thành lập Hội chữ thập đỏ Việt Nam là?", "2/3/1946", "3/2/1964", "23/1/1964", "23/11/1946", "d"));
         list.add(new Question("Ngày thành lập Hội chữ thập đỏ tỉnh Thái Nguyên là?", "15/10/1973", "26/3/1970", "15/1/1971", "1/5/1972", "a"));
         list.add(new Question("Ngày quốc tế tình nguyện là ngày?", "20/2", "15/2", "5/12", "11/1", "c"));
-        list.add(new Question("", "", "", "", "", ""));
 
         Collections.shuffle(list);
     }
@@ -113,26 +138,18 @@ public class StartTest extends AppCompatActivity implements View.OnClickListener
     }
 
     private void checkAnswer(String result) {
-        if(pos == list.size()){
 
-            PrefUtil.saveInt(this, "score", score);
-            Toast.makeText(this, "Hoàn thành bài test. Số điểm của bạn là: " + score + " điểm!!!", Toast.LENGTH_LONG).show();
-            finish();
-        }
-        else{
+        if (result.equals(list.get(pos).getResult()))
+            score += 10;
 
-            if (result.equals(list.get(pos).getResult()))
-                score += 10;
-
-            progress.setVisibility(View.VISIBLE);
-            pos++;
-            new Handler().postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    progress.setVisibility(View.GONE);
-                    initQuestion(pos);
-                }
-            }, 1000);
-        }
+        progress.setVisibility(View.VISIBLE);
+        pos++;
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                progress.setVisibility(View.GONE);
+                initQuestion(pos);
+            }
+        }, 1000);
     }
 }
