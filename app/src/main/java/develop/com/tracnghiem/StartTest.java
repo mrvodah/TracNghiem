@@ -1,6 +1,7 @@
 package develop.com.tracnghiem;
 
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -14,6 +15,7 @@ import com.thekhaeng.pushdownanim.PushDownAnim;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -44,11 +46,14 @@ public class StartTest extends AppCompatActivity implements View.OnClickListener
     ProgressBar progress;
     @BindView(R.id.tv_score)
     TextView tvScore;
+    @BindView(R.id.tv_timer)
+    TextView tvTimer;
 
     private List<Question> list;
 
     private int score = 0, highScore = 0;
     private int pos = 0;
+    private CountDownTimer countDownTimer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,6 +83,22 @@ public class StartTest extends AppCompatActivity implements View.OnClickListener
             }, 2000);
         } else {
 
+            countDownTimer = new CountDownTimer(30000, 1000) {
+
+                public void onTick(long millisUntilFinished) {
+                    tvTimer.setText("" + String.format("%02d:%02d",
+                            TimeUnit.MILLISECONDS.toMinutes(millisUntilFinished),
+                            TimeUnit.MILLISECONDS.toSeconds(millisUntilFinished) -
+                                    TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millisUntilFinished))));
+                    //here you can have your logic to set text to edittext
+                }
+
+                public void onFinish() {
+                    checkAnswer("");
+                    tvTimer.setText("done!");
+                }
+
+            }.start();
             tvStt.setText((pos + 1) + "/" + list.size());
             tvQs.setText(list.get(pos).getQuestion());
             tvAns1.setText("A. " + list.get(pos).getA());
@@ -93,7 +114,7 @@ public class StartTest extends AppCompatActivity implements View.OnClickListener
     public void onBackPressed() {
         super.onBackPressed();
 
-        if(highScore < score)
+        if (highScore < score)
             PrefUtil.saveInt(this, "score", score);
     }
 
@@ -144,6 +165,7 @@ public class StartTest extends AppCompatActivity implements View.OnClickListener
 
         progress.setVisibility(View.VISIBLE);
         pos++;
+        countDownTimer.cancel();
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
